@@ -1,0 +1,6 @@
+{
+  "name": "Drive Voice Recorder",
+  "description": "Always-on audio recording up to 30 minutes. Select and save custom duration segments directly to Google Drive in the /app folder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
