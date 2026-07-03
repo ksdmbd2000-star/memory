@@ -22,7 +22,7 @@ class GeminiLiveWebSocketClient(
 
     companion object {
         private const val TAG = "GeminiLiveWS"
-        private const val WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
+        private const val WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
     }
 
     fun connect() {
@@ -103,11 +103,9 @@ class GeminiLiveWebSocketClient(
             val base64Data = Base64.encodeToString(finalData, Base64.NO_WRAP)
             val audioJson = JSONObject().apply {
                 put("realtimeInput", JSONObject().apply {
-                    put("mediaChunks", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("mimeType", "audio/pcm;rate=16000")
-                            put("data", base64Data)
-                        })
+                    put("audio", JSONObject().apply {
+                        put("data", base64Data)
+                        put("mimeType", "audio/pcm;rate=16000")
                     })
                 })
             }
