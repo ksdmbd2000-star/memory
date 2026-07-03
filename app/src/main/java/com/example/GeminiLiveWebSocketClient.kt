@@ -67,12 +67,13 @@ class GeminiLiveWebSocketClient(
         try {
             val setupJson = JSONObject().apply {
                 put("setup", JSONObject().apply {
-                    put("model", "models/gemini-2.0-flash")
+                    put("model", "models/gemini-2.5-flash-native-audio-latest")
                     put("generationConfig", JSONObject().apply {
                         put("responseModalities", JSONArray().apply {
-                            put("TEXT")
+                            put("AUDIO")
                         })
                     })
+                    put("inputAudioTranscription", JSONObject())
                     put("systemInstruction", JSONObject().apply {
                         put("parts", JSONArray().apply {
                             put(JSONObject().apply {
@@ -127,14 +128,24 @@ class GeminiLiveWebSocketClient(
             val root = JSONObject(text)
             val serverContent = root.optJSONObject("serverContent") ?: root.optJSONObject("server_content") ?: return
             
+            val inputTranscription = serverContent.optJSONObject("inputTranscription") ?: serverContent.optJSONObject("input_transcription")
+            if (inputTranscription != null) {
+                val chunkText = inputTranscription.optString("text")
+                if (!chunkText.isNullOrEmpty()) {
+                    onChunkReceived(chunkText)
+                }
+            }
+
             val modelTurn = serverContent.optJSONObject("modelTurn") ?: serverContent.optJSONObject("model_turn")
             if (modelTurn != null) {
                 val parts = modelTurn.optJSONArray("parts")
                 if (parts != null && parts.length() > 0) {
-                    val part = parts.getJSONObject(0)
-                    val chunkText = part.optString("text")
-                    if (!chunkText.isNullOrEmpty()) {
-                        onChunkReceived(chunkText)
+                    val part = parts.optJSONObject(0)
+                    if (part != null) {
+                        val chunkText = part.optString("text")
+                        if (!chunkText.isNullOrEmpty()) {
+                            onChunkReceived(chunkText)
+                        }
                     }
                 }
             }
