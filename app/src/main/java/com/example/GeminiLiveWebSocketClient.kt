@@ -40,7 +40,7 @@ class GeminiLiveWebSocketClient(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                Log.v(TAG, "Received message text: $text")
+                Log.e("GeminiLiveWS", "RAW MESSAGE = $text")
                 parseAndHandleMessage(text)
             }
 
@@ -123,6 +123,9 @@ class GeminiLiveWebSocketClient(
     private fun parseAndHandleMessage(text: String) {
         try {
             val root = JSONObject(text)
+            if (root.has("error")) {
+                Log.e("GeminiLiveWS", root.getJSONObject("error").toString(2))
+            }
             val serverContent = root.optJSONObject("serverContent") ?: root.optJSONObject("server_content") ?: return
             
             val inputTranscription = serverContent.optJSONObject("inputTranscription") ?: serverContent.optJSONObject("input_transcription")
