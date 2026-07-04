@@ -41,12 +41,16 @@ class GeminiLiveWebSocketClient(
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 Log.e("GeminiLiveWS", "RAW MESSAGE = $text")
+                AudioRecordingState.debugLog.value =
+                    AudioRecordingState.debugLog.value + "\n\nRAW MESSAGE:\n" + text
                 parseAndHandleMessage(text)
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 Log.d(TAG, "Closing: $code / $reason")
                 onStatusChanged("Disconnecting: $code $reason")
+                AudioRecordingState.debugLog.value =
+                    AudioRecordingState.debugLog.value + "\n\nCLOSING code=$code reason=$reason"
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -82,6 +86,8 @@ class GeminiLiveWebSocketClient(
                     })
                 })
             }
+            AudioRecordingState.debugLog.value =
+                "SETUP JSON:\n" + setupJson.toString(2)
             webSocket?.send(setupJson.toString())
             Log.d(TAG, "Sent live setup configuration payload")
         } catch (e: Exception) {
@@ -108,6 +114,8 @@ class GeminiLiveWebSocketClient(
                     })
                 })
             }
+            AudioRecordingState.debugLog.value =
+                AudioRecordingState.debugLog.value + "\n\nAUDIO SENT mimeType=audio/pcm;rate=16000 dataLength=${base64Data.length}"
             socket.send(audioJson.toString())
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send audio chunk", e)

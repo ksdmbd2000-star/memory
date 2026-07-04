@@ -18,6 +18,7 @@ object AudioRecordingState {
     val isLiveChatActive = MutableStateFlow(false)
     val liveChatStatus = MutableStateFlow("Disconnected")
     val activeStreamingText = MutableStateFlow("")
+    val debugLog = MutableStateFlow("")
 
     fun getChunksDir(context: Context): File {
         val dir = File(context.cacheDir, "audio_chunks")

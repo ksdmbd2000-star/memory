@@ -4,6 +4,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -45,7 +47,9 @@ fun LiveChatScreen(
     val isLiveChatActive by AudioRecordingState.isLiveChatActive.collectAsStateWithLifecycle()
     val liveChatStatus by AudioRecordingState.liveChatStatus.collectAsStateWithLifecycle()
     val activeStreamingText by AudioRecordingState.activeStreamingText.collectAsStateWithLifecycle()
+    val debugLog by AudioRecordingState.debugLog.collectAsStateWithLifecycle()
 
+    var isDebugLogExpanded by remember { mutableStateOf(true) }
     var showClearConfirmation by remember { mutableStateOf(false) }
 
     // Auto scroll to top/bottom when a new transcript or active streaming changes
@@ -183,6 +187,104 @@ fun LiveChatScreen(
                         color = Color(0xFF3E2723),
                         fontWeight = FontWeight.Medium
                     )
+                }
+            }
+        }
+
+        // Realtime WebSocket Debug Log Panel
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF262121)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isDebugLogExpanded = !isDebugLogExpanded },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BugReport,
+                            contentDescription = "Debug Log Icon",
+                            tint = Color(0xFFFFD54F)
+                        )
+                        Text(
+                            text = "WebSocket Realtime Debug Log",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(debugLog))
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy Debug Log",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                AudioRecordingState.debugLog.value = ""
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Clear Debug Log",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Icon(
+                            imageVector = if (isDebugLogExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isDebugLogExpanded) "Collapse" else "Expand",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                if (isDebugLogExpanded) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp)
+                            .background(Color.Black, RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        val scrollState = rememberScrollState()
+                        // Auto-scroll to bottom of the log when it changes
+                        LaunchedEffect(debugLog) {
+                            scrollState.animateScrollTo(scrollState.maxValue)
+                        }
+                        Text(
+                            text = if (debugLog.isEmpty()) "No log data yet..." else debugLog,
+                            color = Color(0xFF00FF00),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState)
+                        )
+                    }
                 }
             }
         }
