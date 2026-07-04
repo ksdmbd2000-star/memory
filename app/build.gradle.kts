@@ -17,8 +17,8 @@ android {
     applicationId = "com.aistudio.driverecorder.fqlpzk"
     minSdk = 24
     targetSdk = 35
-    versionCode = 52
-    versionName = "52.0"
+    versionCode = 55
+    versionName = "55.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

@@ -71,11 +71,10 @@ class GeminiLiveWebSocketClient(
                     put("responseModalities", JSONArray().apply {
                         put("AUDIO")
                     })
-                    put("inputAudioTranscription", JSONObject())
                     put("systemInstruction", JSONObject().apply {
                         put("parts", JSONArray().apply {
                             put(JSONObject().apply {
-                                put("text", "You are an expert Japanese speech-to-text transcription bot. Transcribe the user's Japanese speech accurately.")
+                                put("text", "You are a helpful assistant.")
                             })
                         })
                     })
