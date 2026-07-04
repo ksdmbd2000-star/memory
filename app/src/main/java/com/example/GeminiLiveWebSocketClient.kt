@@ -63,6 +63,8 @@ class GeminiLiveWebSocketClient(
                 AudioRecordingState.isLiveChatActive.value = false
                 Log.d(TAG, "Closed: $code / $reason")
                 onStatusChanged("Disconnected")
+                AudioRecordingState.debugLog.value =
+                    AudioRecordingState.debugLog.value + "\n\nON_CLOSED code=$code reason=$reason"
                 this@GeminiLiveWebSocketClient.webSocket = null
             }
 
@@ -86,6 +88,7 @@ class GeminiLiveWebSocketClient(
                             put("AUDIO")
                         })
                     })
+                    put("inputAudioTranscription", JSONObject())
                     put("systemInstruction", JSONObject().apply {
                         put("parts", JSONArray().apply {
                             put(JSONObject().apply {
