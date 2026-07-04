@@ -14,6 +14,8 @@ class GeminiLiveWebSocketClient(
     private val onStatusChanged: (String) -> Unit
 ) {
     private var webSocket: WebSocket? = null
+    @Volatile
+    private var isConnected = false
     private val client = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
@@ -34,6 +36,7 @@ class GeminiLiveWebSocketClient(
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                isConnected = true
                 Log.d(TAG, "WebSocket Opened successfully")
                 onStatusChanged("Connected")
                 sendSetupMessage()
@@ -47,6 +50,7 @@ class GeminiLiveWebSocketClient(
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                isConnected = false
                 Log.d(TAG, "Closing: $code / $reason")
                 onStatusChanged("Disconnecting: $code $reason")
                 AudioRecordingState.debugLog.value =
@@ -54,12 +58,14 @@ class GeminiLiveWebSocketClient(
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                isConnected = false
                 Log.d(TAG, "Closed: $code / $reason")
                 onStatusChanged("Disconnected")
                 this@GeminiLiveWebSocketClient.webSocket = null
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                isConnected = false
                 Log.e(TAG, "WebSocket Failure: ${t.message}", t)
                 onStatusChanged("Error: ${t.message ?: "Unknown Error"}")
                 this@GeminiLiveWebSocketClient.webSocket = null
@@ -97,6 +103,7 @@ class GeminiLiveWebSocketClient(
 
     fun sendAudioChunk(pcmData: ByteArray, bytesCount: Int) {
         val socket = webSocket ?: return
+        if (!isConnected) return
         try {
             // If bytesCount is less than the array size, slice it
             val finalData = if (bytesCount == pcmData.size) {
@@ -114,15 +121,19 @@ class GeminiLiveWebSocketClient(
                     })
                 })
             }
+            val accepted = socket.send(audioJson.toString())
             AudioRecordingState.debugLog.value =
-                AudioRecordingState.debugLog.value + "\n\nAUDIO SENT mimeType=audio/pcm;rate=16000 dataLength=${base64Data.length}"
-            socket.send(audioJson.toString())
+                AudioRecordingState.debugLog.value + "\n\nAUDIO SEND accepted=$accepted dataLength=${base64Data.length}"
+            if (!accepted) {
+                isConnected = false
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send audio chunk", e)
         }
     }
 
     fun disconnect() {
+        isConnected = false
         webSocket?.close(1000, "Normal closure")
         webSocket = null
         onStatusChanged("Disconnected")
