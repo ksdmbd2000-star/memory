@@ -16,6 +16,7 @@ class GeminiLiveWebSocketClient(
     private var webSocket: WebSocket? = null
     @Volatile
     private var isConnected = false
+    private var bytesSentInCurrentTurn = 0L
     private val client = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
@@ -37,6 +38,7 @@ class GeminiLiveWebSocketClient(
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 isConnected = true
+                bytesSentInCurrentTurn = 0L
                 Log.d(TAG, "WebSocket Opened successfully")
                 onStatusChanged("Connected")
                 sendSetupMessage()
@@ -133,6 +135,12 @@ class GeminiLiveWebSocketClient(
                 AudioRecordingState.debugLog.value + "\n\nAUDIO SEND accepted=$accepted dataLength=${base64Data.length}"
             if (!accepted) {
                 isConnected = false
+            } else {
+                bytesSentInCurrentTurn += finalData.size
+                if (bytesSentInCurrentTurn >= 160000L) {
+                    sendTurnComplete()
+                    bytesSentInCurrentTurn = 0L
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send audio chunk", e)
@@ -140,10 +148,28 @@ class GeminiLiveWebSocketClient(
     }
 
     fun disconnect() {
+        if (isConnected) {
+            sendTurnComplete()
+        }
         isConnected = false
         webSocket?.close(1000, "Normal closure")
         webSocket = null
         onStatusChanged("Disconnected")
+    }
+
+    fun sendTurnComplete() {
+        val socket = webSocket ?: return
+        if (!isConnected) return
+
+        val json = JSONObject().apply {
+            put("clientContent", JSONObject().apply {
+                put("turnComplete", true)
+            })
+        }
+
+        val accepted = socket.send(json.toString())
+        AudioRecordingState.debugLog.value =
+            AudioRecordingState.debugLog.value + "\n\nTURN_COMPLETE sent accepted=$accepted"
     }
 
     private fun parseAndHandleMessage(text: String) {
@@ -178,6 +204,7 @@ class GeminiLiveWebSocketClient(
 
             val turnComplete = serverContent.optBoolean("turnComplete", false) || serverContent.optBoolean("turn_complete", false)
             if (turnComplete) {
+                bytesSentInCurrentTurn = 0L
                 onTurnCompleted()
             }
         } catch (e: Exception) {
