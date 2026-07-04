@@ -67,17 +67,15 @@ class GeminiLiveWebSocketClient(
         try {
             val setupJson = JSONObject().apply {
                 put("setup", JSONObject().apply {
-                    put("model", "models/gemini-2.5-flash-native-audio-latest")
-                    put("generationConfig", JSONObject().apply {
-                        put("responseModalities", JSONArray().apply {
-                            put("AUDIO")
-                        })
+                    put("model", "models/gemini-3.1-flash-live-preview")
+                    put("responseModalities", JSONArray().apply {
+                        put("AUDIO")
                     })
                     put("inputAudioTranscription", JSONObject())
                     put("systemInstruction", JSONObject().apply {
                         put("parts", JSONArray().apply {
                             put(JSONObject().apply {
-                                put("text", "You are an expert Japanese speech-to-text transcription bot. Listen to the user's speech and output EXACTLY what they say in Japanese. Do NOT add any preamble, greeting, response, commentary, summary, punctuation correction, or conversation filler. Output ONLY the raw transcribed words. If there is no speech or only noise, do not output anything.")
+                                put("text", "You are an expert Japanese speech-to-text transcription bot. Transcribe the user's Japanese speech accurately.")
                             })
                         })
                     })
