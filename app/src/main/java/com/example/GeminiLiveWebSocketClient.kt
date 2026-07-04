@@ -51,6 +51,7 @@ class GeminiLiveWebSocketClient(
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                 isConnected = false
+                AudioRecordingState.isLiveChatActive.value = false
                 Log.d(TAG, "Closing: $code / $reason")
                 onStatusChanged("Disconnecting: $code $reason")
                 AudioRecordingState.debugLog.value =
@@ -59,6 +60,7 @@ class GeminiLiveWebSocketClient(
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 isConnected = false
+                AudioRecordingState.isLiveChatActive.value = false
                 Log.d(TAG, "Closed: $code / $reason")
                 onStatusChanged("Disconnected")
                 this@GeminiLiveWebSocketClient.webSocket = null
@@ -66,6 +68,7 @@ class GeminiLiveWebSocketClient(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 isConnected = false
+                AudioRecordingState.isLiveChatActive.value = false
                 Log.e(TAG, "WebSocket Failure: ${t.message}", t)
                 onStatusChanged("Error: ${t.message ?: "Unknown Error"}")
                 this@GeminiLiveWebSocketClient.webSocket = null
@@ -104,6 +107,7 @@ class GeminiLiveWebSocketClient(
     fun sendAudioChunk(pcmData: ByteArray, bytesCount: Int) {
         val socket = webSocket ?: return
         if (!isConnected) return
+        if (!AudioRecordingState.isLiveChatActive.value) return
         try {
             // If bytesCount is less than the array size, slice it
             val finalData = if (bytesCount == pcmData.size) {
