@@ -67,9 +67,11 @@ class GeminiLiveWebSocketClient(
         try {
             val setupJson = JSONObject().apply {
                 put("setup", JSONObject().apply {
-                    put("model", "models/gemini-3.1-flash-live-preview")
-                    put("responseModalities", JSONArray().apply {
-                        put("AUDIO")
+                    put("model", "models/gemini-2.5-flash-native-audio-latest")
+                    put("generationConfig", JSONObject().apply {
+                        put("responseModalities", JSONArray().apply {
+                            put("AUDIO")
+                        })
                     })
                     put("systemInstruction", JSONObject().apply {
                         put("parts", JSONArray().apply {
